@@ -22,3 +22,5 @@ email-validator==2.2.0
 httpx
 
 python-dateutil==2.9.0
+
+paho-mqtt
