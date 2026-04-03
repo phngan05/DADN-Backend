@@ -10,10 +10,6 @@ class Settings(BaseSettings):
     DATABASE_SERVICE_ROLE_KEY: str
     DATABASE_JWT_SECRET: str
     
-    # Adafruit
-    ADAFRUIT_AIO_USERNAME: str
-    ADAFRUIT_AIO_KEY: str
-    
     # Application
     PROJECT_NAME: str = "ComHome API" 
     APP_VERSION: str = "1.0.0"

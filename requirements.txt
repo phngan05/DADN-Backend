@@ -24,3 +24,5 @@ httpx
 python-dateutil==2.9.0
 
 paho-mqtt
+
+adafruit-io==3.0.0
