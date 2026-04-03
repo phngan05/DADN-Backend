@@ -13,7 +13,8 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Schema for creating new user"""
     password: str = Field(..., min_length=8, description="Password")
-    
+    adafruit_username: str = Field(None, description="Adafruit username")
+    adafruit_api_key: str = Field(None, description="Adafruit API key")
     @validator('password')
     def validate_password(cls, v):
         """Validate password strength"""
