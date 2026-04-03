@@ -5,17 +5,34 @@ from app.schemas.user import User
 
 router = APIRouter()
 
-@router.get("/profile")
+# Get user name and full name
+@router.get("/")
 def get_profile(user_id: str = Depends(get_current_user_id)):
     try:
         response = supabase_client.table("USER")\
             .select("full_name, username")\
-            .equal('user_id', user_id)\
+            .eq('user_id', user_id)\
             .execute()
-        
         return response.data
         
     except Exception as e:
         print(f"DEBUG ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
+# Update user profile
+@router.put("/")
+def update_profile(user: User, user_id: str = Depends(get_current_user_id)):
+    try:
+        update_data = {
+            "full_name": user.full_name,
+            "username": user.username
+        }
+        response = supabase_client.table("USER")\
+            .update(update_data)\
+            .eq('user_id', user_id)\
+            .execute()
+        return response.data
+        
+    except Exception as e:
+        print(f"DEBUG ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

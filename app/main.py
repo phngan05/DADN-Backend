@@ -1,10 +1,10 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.api import api_router
 from app.core.config import settings
-from app.core.adafruit import adafruit_service
+from app.core.websocket_manager import manager
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -27,6 +27,11 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 def root():
     return {"message": "Welcome to ComHome API"}
 
-@app.on_event("startup")
-async def startup_event():
-    adafruit_service.start()
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str):
+    await manager.connect(user_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except Exception:
+        manager.disconnect(user_id, websocket)
