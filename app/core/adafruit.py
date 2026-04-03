@@ -1,18 +1,23 @@
+import asyncio
+from .websocket_manager import manager
 import paho.mqtt.client as mqtt
 from Adafruit_IO import Client
 import time
 
+
 class AdafruitMQTT:
-    def __init__(self, username: str, api_key: str):
+    def __init__(self, username: str, user_id: str, api_key: str, loop: asyncio.AbstractEventLoop):
+        self.user_id = user_id
         self.username = username
         self.api_key = api_key
-        # REST Client để lấy lịch sử
+        self.loop = loop
+        
         self.aio = Client(username, api_key)
-        # MQTT Client để nhận dữ liệu real-time
+        
         self.client = mqtt.Client(client_id=f"fastapi_{username}_{int(time.time())}")
         self.client.username_pw_set(username, api_key)
         
-        self.feeds_data = {} # Lưu giá trị mới nhất
+        self.feeds_data = {}
         
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
@@ -37,8 +42,16 @@ class AdafruitMQTT:
         feed_name = msg.topic.split('/')[-1]
         payload = msg.payload.decode()
         self.feeds_data[feed_name] = payload
+        
         print(f"📩 [{self.username}] Update [{feed_name}]: {payload}")
 
+        data_to_send = {"feed": feed_name, "value": payload}
+        
+        asyncio.run_coroutine_threadsafe(
+            manager.send_personal_message(data_to_send, self.user_id), 
+            self.loop
+        )
+        
     def start(self):
         self.client.connect("io.adafruit.com", 1883, 60)
         self.client.loop_start()
