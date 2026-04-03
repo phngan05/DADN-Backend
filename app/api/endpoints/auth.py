@@ -4,11 +4,11 @@ from app.core.database import supabase_client
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.schemas.user import UserCreate
 from app.core.adafruit import AdafruitMQTT, active_adafruit_sessions
-
+import asyncio
 router = APIRouter()
 
 @router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     # Check user
     res = supabase_client.table("USER").select("*").eq("username", form_data.username).execute()
     if not res.data:
@@ -26,13 +26,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         
         # Initiate MQTT
         if user_id_str not in active_adafruit_sessions:
-            new_service = AdafruitMQTT(config["username"], config["api_key"])
+            loop = asyncio.get_event_loop()
+            new_service = AdafruitMQTT(config["username"], user_id_str, config["api_key"], loop=loop)
             new_service.start()
             active_adafruit_sessions[user_id_str] = new_service
 
     # Create token
     token = create_access_token(data={"sub": str(user["user_id"])})
-    return {"access_token": token, "token_type": "bearer"}
+    return {"access_token": token, "token_type": "bearer", "user_id": user["user_id"]}
 
 @router.post("/register")
 def register_user(user_in: UserCreate):
