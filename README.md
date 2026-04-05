@@ -46,3 +46,9 @@ Truy cập [FastAPI docs](http://127.0.0.1:8000/docs) sau khi khởi tạo để
     + get / : lấy thông tin
     + put / : cập nhật
     + post / : tạo thông tin feed mới
+    + delete /: xoá feed
+    
+- /noti
+    + get / : lấy toàn bộ thông báo của user
+    + patch / : cập nhật trạng thái đã đọc
+    + post / : Tạo thông báo mới
