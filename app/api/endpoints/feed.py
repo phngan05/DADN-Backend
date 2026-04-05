@@ -73,3 +73,20 @@ def create_feed(feed: FeedCreate, user_id: str = Depends(get_current_user_id)):
     except Exception as e:
         print(f"DEBUG ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.delete("/")
+def delete_feed(feed_id: str):
+    try:
+        # Check if the feed exists
+        existing_feed = supabase_client.table("FEED").select("*").eq("feed_id", feed_id).execute()
+        if not existing_feed.data:
+            raise HTTPException(status_code=404, detail="Feed not found")
+
+        # Delete the feed
+        response = supabase_client.table("FEED").delete().eq("feed_id", feed_id).execute()
+
+        return {"message": "Feed deleted successfully"}
+        
+    except Exception as e:
+        print(f"DEBUG ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
