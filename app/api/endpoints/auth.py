@@ -3,7 +3,6 @@ from fastapi import Depends, APIRouter, HTTPException
 from app.core.database import supabase_client
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.schemas.user import UserCreate
-from app.core.adafruit import AdafruitMQTT, active_adafruit_sessions
 import asyncio
 router = APIRouter()
 
@@ -17,19 +16,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = res.data[0]
     if not verify_password(form_data.password, user["password"]):
         raise HTTPException(status_code=400, detail="Wrong password")
-
-    # Get Adafruit info
-    ada_res = supabase_client.table("ADAFRUIT_SERVER").select("*").eq("user_id", user["user_id"]).execute()
-    if ada_res.data:
-        config = ada_res.data[0]
-        user_id_str = str(user["user_id"])
-        
-        # Initiate MQTT
-        if user_id_str not in active_adafruit_sessions:
-            loop = asyncio.get_event_loop()
-            new_service = AdafruitMQTT(config["username"], user_id_str, config["api_key"], loop=loop)
-            new_service.start()
-            active_adafruit_sessions[user_id_str] = new_service
 
     # Create token
     token = create_access_token(data={"sub": str(user["user_id"])})
