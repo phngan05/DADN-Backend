@@ -10,7 +10,7 @@ router = APIRouter()
 def get_profile(user_id: str = Depends(get_current_user_id)):
     try:
         response = supabase_client.table("USER")\
-            .select("full_name, username")\
+            .select("full_name, username, photoUrl")\
             .eq('user_id', user_id)\
             .execute()
         return response.data
@@ -25,7 +25,8 @@ def update_profile(user: User, user_id: str = Depends(get_current_user_id)):
     try:
         update_data = {
             "full_name": user.full_name,
-            "username": user.username
+            "username": user.username,
+            "photoUrl": user.photoUrl
         }
         response = supabase_client.table("USER")\
             .update(update_data)\

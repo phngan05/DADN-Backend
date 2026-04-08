@@ -6,7 +6,7 @@ class UserBase(BaseModel):
     """Base schema cho User"""
     full_name: str = Field(None, description = "Full name")
     username: str = Field(None, description = "User name")
-    
+    photoUrl: str = Field(None, description = "Photo URL")
     class Config:
         from_attributes = True 
 
