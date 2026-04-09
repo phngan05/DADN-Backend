@@ -7,7 +7,7 @@ router = APIRouter()
 
 
 
-@router.get("/")
+@router.get("")
 def get_feeds(feed_id: str = None, user_id: str = Depends(get_current_user_id)):
     try:
         query = supabase_client.table("FEED")\
@@ -27,7 +27,7 @@ def get_feeds(feed_id: str = None, user_id: str = Depends(get_current_user_id)):
         print(f"DEBUG ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
   
-@router.put("/")
+@router.put("")
 def update_feed(feed_id: str, feed: FeedUpdate):
     try:
         # Check if the feed exists
@@ -47,7 +47,7 @@ def update_feed(feed_id: str, feed: FeedUpdate):
         print(f"DEBUG ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))   
     
-@router.post("/")
+@router.post("")
 def create_feed(feed: FeedCreate, user_id: str = Depends(get_current_user_id)):
     try:
         if not feed.feed_key or not feed.category:
