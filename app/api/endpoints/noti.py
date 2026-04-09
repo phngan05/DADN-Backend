@@ -5,7 +5,7 @@ from app.schemas.noti import NotiCreate
 router = APIRouter()
 
 # Get notification for user
-@router.get("/")
+@router.get("")
 def get_noti(user_id: str = Depends(get_current_user_id)):
     try:
         response = supabase_client.table("NOTIFICATION")\
@@ -19,7 +19,7 @@ def get_noti(user_id: str = Depends(get_current_user_id)):
         raise HTTPException(status_code=500, detail=str(e))
     
 # Update notification as read
-@router.patch("/")
+@router.patch("")
 def update_noti_read(user_id: str = Depends(get_current_user_id)):
     try:
         update_data = {
@@ -37,7 +37,7 @@ def update_noti_read(user_id: str = Depends(get_current_user_id)):
 
 
 # Create new notification
-@router.post("/")
+@router.post("")
 def create_noti(noti: NotiCreate, user_id: str = Depends(get_current_user_id)):
     try:
         new_noti = {

@@ -40,7 +40,7 @@ def get_history(feed_key: str, mqtt_service = Depends(get_user_mqtt)):
     data = mqtt_service.get_feed_history(feed_key)
     return {"feed": feed_key, "history": data}
 
-@router.put("/")
+@router.put("")
 def update_value(record: RecordUpdate, mqtt_service = Depends(get_user_mqtt)):
     """Control device by updating feed value"""
     topic = f"{mqtt_service.username}/feeds/{record.feed_key}"
