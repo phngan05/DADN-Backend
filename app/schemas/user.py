@@ -26,8 +26,7 @@ class UserUpdate(BaseModel):
     """Schema for updating user information"""
     full_name: str = None
     username: str = None
-    password: str = Field(None, min_length=8)
-    
+    photo_url: Optional[str] = None    
     class Config:
         from_attributes = True
 
