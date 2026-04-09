@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.core.database import supabase_client
 from app.core.security import get_current_user_id
-from app.schemas.user import User
+from app.schemas.user import UserUpdate
 
 router = APIRouter()
 
@@ -21,7 +21,7 @@ def get_profile(user_id: str = Depends(get_current_user_id)):
     
 # Update user profile
 @router.put("")
-def update_profile(user: User, user_id: str = Depends(get_current_user_id)):
+def update_profile(user: UserUpdate, user_id: str = Depends(get_current_user_id)):
     try:
         update_data = {
             "full_name": user.full_name,
