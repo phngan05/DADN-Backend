@@ -23,7 +23,7 @@ pip install -r requirements.txt
 ## Chạy API
 
 ```sh
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8000
 ```
 
 # API Address
