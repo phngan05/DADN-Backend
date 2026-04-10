@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.core.adafruit import active_adafruit_sessions
 from app.core.security import get_current_user_id
 from app.schemas.record import RecordUpdate
 from app.core.adafruit import AdafruitMQTT, active_adafruit_sessions

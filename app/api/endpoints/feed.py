@@ -53,7 +53,7 @@ def create_feed(feed: FeedCreate, user_id: str = Depends(get_current_user_id)):
         if not feed.feed_key or not feed.category:
             raise HTTPException(status_code=400, detail="feed_key and category are required")
         
-        if feed.category not in ["Độ ẩm", "Nhiệt độ", "Độ sáng", "Cường độ LED", "Trạng thái đèn", "Tốc độ quạt", "Mật khẩu cửa"]:
+        if feed.category not in ["Temperature", "Humidity", "Illuminance", "LED Intensity", "Fan Speed", "LED Status"]:
             raise HTTPException(status_code=400, detail="Invalid category")
         
         response = supabase_client.table("ADAFRUIT_SERVER").select("server_id").eq("user_id", user_id).execute()
