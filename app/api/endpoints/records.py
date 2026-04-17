@@ -1,11 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.core.security import get_current_user_id
-from app.schemas.record import RecordUpdate
+from app.schemas.record import RecordUpdate, AutoUpdate
 from app.core.adafruit import AdafruitMQTT, active_adafruit_sessions
 from app.core.database import supabase_client
 import asyncio
+import numpy as np
+from app.models.models import MODEL
 
 router = APIRouter()
+
 
 def get_user_mqtt(user_id: str = Depends(get_current_user_id)):
     if user_id not in active_adafruit_sessions:
@@ -29,7 +32,7 @@ async def get_or_create_mqtt_service(user_id: str):
 
 @router.get("/all")
 async def get_all_feeds(user_id: str = Depends(get_current_user_id)):
-    """API này vừa kích hoạt kết nối, vừa lấy dữ liệu hiện tại"""
+    """Get all feeds for the current user"""
     mqtt_service = await get_or_create_mqtt_service(user_id)
     return mqtt_service.feeds_data
 
@@ -45,3 +48,30 @@ def update_value(record: RecordUpdate, mqtt_service = Depends(get_user_mqtt)):
     topic = f"{mqtt_service.username}/feeds/{record.feed_key}"
     mqtt_service.client.publish(topic, record.value)
     return {"status": "success", "feed": record.feed_key, "value": record.value}
+
+@router.put("/auto")
+def auto_update(feed_info: AutoUpdate, mqtt_service = Depends(get_user_mqtt)):    
+    # Get feeds name
+    temp_feed = feed_info.temperature_feed
+    humid_feed = feed_info.humidity_feed
+    fan_feed = feed_info.fan_feed
+    
+    # Get temperature and humidity
+    temperature = mqtt_service.feeds_data[temp_feed]
+    humidity = mqtt_service.feeds_data[humid_feed]
+    
+    # Set 2 dimesion array
+    input_data = np.array([[temperature, humidity]])
+    print("Input data: ", input_data)
+    # Make prediction
+    prediction = MODEL.predict(input_data)[0]
+    speed_output = int(np.round(prediction))
+    
+    if speed_output < 60:
+        speed_output = 0
+    elif speed_output > 100:
+        speed_output = 100
+        
+    record_to_update = RecordUpdate(feed_key=fan_feed, value=speed_output)
+    
+    return update_value(record=record_to_update, mqtt_service=mqtt_service)

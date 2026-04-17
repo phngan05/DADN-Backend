@@ -28,10 +28,10 @@ def get_feeds(feed_id: str = None, user_id: str = Depends(get_current_user_id)):
         raise HTTPException(status_code=500, detail=str(e))
   
 @router.put("")
-def update_feed(feed_id: str, feed: FeedUpdate):
+def update_feed(feed: FeedUpdate):
     try:
         # Check if the feed exists
-        existing_feed = supabase_client.table("FEED").select("*").eq("feed_id", feed_id).execute()
+        existing_feed = supabase_client.table("FEED").select("*").eq("feed_id", feed.feed_id).execute()
         if not existing_feed.data:
             raise HTTPException(status_code=404, detail="Feed not found")
 
@@ -39,9 +39,9 @@ def update_feed(feed_id: str, feed: FeedUpdate):
         response = supabase_client.table("FEED").update({
             "feed_key": feed.feed_key,
             "category": feed.category
-        }).eq("feed_id", feed_id).execute()
+        }).eq("feed_id", feed.feed_id).execute()
 
-        return response.data
+        return response.data[0]
         
     except Exception as e:
         print(f"DEBUG ERROR: {e}")
@@ -50,6 +50,7 @@ def update_feed(feed_id: str, feed: FeedUpdate):
 @router.post("")
 def create_feed(feed: FeedCreate, user_id: str = Depends(get_current_user_id)):
     try:
+        print(f"DEBUG: Received feed data: {feed}")
         if not feed.feed_key or not feed.category:
             raise HTTPException(status_code=400, detail="feed_key and category are required")
         
@@ -68,7 +69,24 @@ def create_feed(feed: FeedCreate, user_id: str = Depends(get_current_user_id)):
                 
         response = supabase_client.table("FEED").insert(feed_data).execute()
         
-        return response.data
+        return response.data[0]
+        
+    except Exception as e:
+        print(f"DEBUG ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.delete("/{feed_id}")
+def delete_feed(feed_id: str):
+    try:
+        # Check if the feed exists
+        existing_feed = supabase_client.table("FEED").select("*").eq("feed_id", feed_id).execute()
+        if not existing_feed.data:
+            raise HTTPException(status_code=404, detail="Feed not found")
+
+        # Delete the feed
+        response = supabase_client.table("FEED").delete().eq("feed_id", feed_id).execute()
+
+        return {"status": "success", "message": "Feed deleted successfully"}
         
     except Exception as e:
         print(f"DEBUG ERROR: {e}")

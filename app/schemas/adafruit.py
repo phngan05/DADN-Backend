@@ -43,6 +43,7 @@ class FeedCreate(FeedBase):
 
 class FeedUpdate(BaseModel):
     """Schema for updating feed information"""
+    feed_id : str = Field(..., description="Feed ID")
     feed_key: str = None
     category: str = None
     
