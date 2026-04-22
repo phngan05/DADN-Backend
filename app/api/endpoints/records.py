@@ -3,6 +3,7 @@ from app.core.security import get_current_user_id
 from app.schemas.record import RecordUpdate, AutoUpdate
 from app.core.adafruit import AdafruitMQTT, active_adafruit_sessions
 from app.core.database import supabase_client
+from app.api.endpoints.feed import get_feeds
 import asyncio
 import numpy as np
 from app.models.models import MODEL
@@ -50,19 +51,31 @@ def update_value(record: RecordUpdate, mqtt_service = Depends(get_user_mqtt)):
     return {"status": "success", "feed": record.feed_key, "value": record.value}
 
 @router.put("/auto")
-def auto_update(feed_info: AutoUpdate, mqtt_service = Depends(get_user_mqtt)):    
-    # Get feeds name
-    temp_feed = feed_info.temperature_feed
-    humid_feed = feed_info.humidity_feed
-    fan_feed = feed_info.fan_feed
+def auto_update(feed_info = Depends(get_feeds), mqtt_service = Depends(get_user_mqtt)):
     
+    feeds = {f['category']: f['feed_key'] for f in feed_info}
+    
+    # Get feed for fan speed 
+    temp_feed  = feeds.get("Temperature")
+    humid_feed = feeds.get("Humidity")
+    fan_feed   = feeds.get("Fan Speed")
+    
+    # Get feed for led
+    light_feed = feeds.get("Illuminance")
+    led_feed   = feeds.get("LED Intensity")
+    
+    print(light_feed)
     # Get temperature and humidity
     temperature = mqtt_service.feeds_data[temp_feed]
     humidity = mqtt_service.feeds_data[humid_feed]
     
+    # Get light
+    light = mqtt_service.feeds_data[light_feed]
+    
     # Set 2 dimesion array
     input_data = np.array([[temperature, humidity]])
-    print("Input data: ", input_data)
+    light_data = int(light)
+    
     # Make prediction
     prediction = MODEL.predict(input_data)[0]
     speed_output = int(np.round(prediction))
@@ -71,7 +84,24 @@ def auto_update(feed_info: AutoUpdate, mqtt_service = Depends(get_user_mqtt)):
         speed_output = 0
     elif speed_output > 100:
         speed_output = 100
-        
-    record_to_update = RecordUpdate(feed_key=fan_feed, value=speed_output)
     
-    return update_value(record=record_to_update, mqtt_service=mqtt_service)
+    # Light prediction simulation
+    led_output = 0
+    if light_data < 30:
+        led_output = np.random.randint(85, 100, 1)[0]
+    elif light_data < 50:
+        led_output = np.random.randint(65, 89, 1)[0]
+    elif light_data < 70:
+        led_output = np.random.randint(50, 71, 1)[0]
+    elif light_data < 85:
+        led_output = np.random.randint(30, 55, 1)[0]
+    else:
+        led_output = np.random.randint(0, 32, 1)[0]
+        
+    speed_to_update = RecordUpdate(feed_key=fan_feed, value=speed_output)
+    led_to_update = RecordUpdate(feed_key=led_feed, value=led_output)
+    
+    speed_res = update_value(record=speed_to_update, mqtt_service=mqtt_service)
+    led_res = update_value(record=led_to_update, mqtt_service=mqtt_service)
+    
+    return speed_res, led_res
