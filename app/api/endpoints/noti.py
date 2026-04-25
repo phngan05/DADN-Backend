@@ -44,7 +44,6 @@ def create_noti(noti: NotiCreate, user_id: str = Depends(get_current_user_id)):
             "user_id": user_id,
             "title": noti.title,
             "body": noti.body,
-            "is_read": noti.is_read
         }
         response = supabase_client.table("NOTIFICATION")\
             .insert(new_noti)\
