@@ -44,6 +44,8 @@ def create_noti(noti: NotiCreate, user_id: str = Depends(get_current_user_id)):
             "user_id": user_id,
             "title": noti.title,
             "body": noti.body,
+            "noti_type": noti.noti_type,
+            "device_category": noti.device_category,
         }
         response = supabase_client.table("NOTIFICATION")\
             .insert(new_noti)\
@@ -53,3 +55,24 @@ def create_noti(noti: NotiCreate, user_id: str = Depends(get_current_user_id)):
     except Exception as e:
         print(f"DEBUG ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Helper function to create notification with explicit user_id (for internal use)
+def create_notification(noti: NotiCreate, user_id: str):
+    """Create notification with explicit user_id - for internal use"""
+    try:
+        new_noti = {
+            "user_id": user_id,
+            "title": noti.title,
+            "body": noti.body,
+            "noti_type": noti.noti_type,
+            "device_category": noti.device_category,
+        }
+        response = supabase_client.table("NOTIFICATION")\
+            .insert(new_noti)\
+            .execute()
+        return response.data
+        
+    except Exception as e:
+        print(f"DEBUG ERROR: {e}")
+        return None

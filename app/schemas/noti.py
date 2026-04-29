@@ -7,7 +7,7 @@ class NotiBase(BaseModel):
     title: str = Field(..., description="Notification title")
     body: str = Field(..., description="Notification body")
     noti_type: str = Field(..., description="Notification type")
-    device_type: Optional[str] = None
+    device_category: Optional[str] = None
     
     class Config:
         from_attributes = True 
