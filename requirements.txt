@@ -30,7 +30,7 @@ adafruit-io==3.0.0
 asyncio==4.0.0
 
 # Machine learning model
-scikit-learn==1.8.0
+scikit-learn==1.6.1
 numpy==2.4.4
 joblib==1.5.3
 
