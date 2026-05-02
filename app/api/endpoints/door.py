@@ -1,7 +1,11 @@
 import json
 from fastapi import APIRouter, HTTPException, Depends
 from app.core.door_auth import get_password_hash, verify_password
+from app.core.security import get_current_user_id
 from app.schemas.door_auth import PasswordUpdate, DoorAccessRequest
+from app.schemas.noti import NotiCreate
+from app.api.endpoints.noti import create_notification
+
 PASSWORD_FILE = "app\\core\\door_auth.json"
 
 router = APIRouter()
@@ -35,7 +39,7 @@ async def verify_door_password(data: DoorAccessRequest):
     return True
 
 @router.put("")
-async def update_password(data: PasswordUpdate):
+async def update_password(data: PasswordUpdate, user_id: str = Depends(get_current_user_id)):
     """Cập nhật mật khẩu cửa"""
     current_hash = read_from_json()
     if not current_hash:
@@ -46,5 +50,10 @@ async def update_password(data: PasswordUpdate):
 
     new_hashed = get_password_hash(data.new_password)
     save_to_json(new_hashed)
-    
+    noti = NotiCreate(
+        title="Door Password Changed",
+        body=f"Password of the door has been changed successfully!",
+        noti_type="Website",
+    )
+    create_notification(noti, user_id)
     return True
