@@ -64,7 +64,6 @@ def auto_update(feed_info = Depends(get_feeds), mqtt_service = Depends(get_user_
     light_feed = feeds.get("Illuminance")
     led_feed   = feeds.get("LED Intensity")
     
-    print(light_feed)
     # Get temperature and humidity
     temperature = mqtt_service.feeds_data[temp_feed]
     humidity = mqtt_service.feeds_data[humid_feed]
