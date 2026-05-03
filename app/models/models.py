@@ -1,4 +1,7 @@
-import joblib
 import os
+import joblib
 
-MODEL = joblib.load("app\\models\\fan_model.pkl")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(BASE_DIR, "fan_model.pkl")
+
+MODEL = joblib.load(model_path)
