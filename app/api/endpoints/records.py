@@ -63,6 +63,7 @@ def auto_update(feed_info = Depends(get_feeds), mqtt_service = Depends(get_user_
     # Get feed for led
     light_feed = feeds.get("Illuminance")
     led_feed   = feeds.get("LED Intensity")
+    led_state_feed = feeds.get("LED Status")
     
     # Get temperature and humidity
     temperature = mqtt_service.feeds_data[temp_feed]
@@ -99,8 +100,10 @@ def auto_update(feed_info = Depends(get_feeds), mqtt_service = Depends(get_user_
         
     speed_to_update = RecordUpdate(feed_key=fan_feed, value=speed_output)
     led_to_update = RecordUpdate(feed_key=led_feed, value=led_output)
+    led_state_to_update = RecordUpdate(feed_key=led_state_feed, value=1 if led_output > 0 else 0)
     
     speed_res = update_value(record=speed_to_update, mqtt_service=mqtt_service)
+    led_state_res = update_value(record=led_state_to_update, mqtt_service=mqtt_service)
     led_res = update_value(record=led_to_update, mqtt_service=mqtt_service)
     
-    return speed_res, led_res
+    return speed_res, led_res, led_state_res
