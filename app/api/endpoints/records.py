@@ -103,4 +103,4 @@ def auto_update(feed_info = Depends(get_feeds), mqtt_service = Depends(get_user_
     speed_res = update_value(record=speed_to_update, mqtt_service=mqtt_service)
     led_res = update_value(record=led_to_update, mqtt_service=mqtt_service)
     
-    return speed_res, led_res, led_state_res
+    return speed_res, led_res
