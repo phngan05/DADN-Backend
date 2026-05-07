@@ -22,6 +22,8 @@ class AdafruitMQTT:
         
         self.feeds_data = {}
         self.feed_info = get_feeds(user_id=user_id)
+        self.auto_mode = False
+        self.is_auto_updating = False
         
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
@@ -43,56 +45,96 @@ class AdafruitMQTT:
             print(f"❌ Connection failed for {self.username}: {rc}")
 
     def on_message(self, client, userdata, msg):
-        feed_name = msg.topic.split('/')[-1]
+        feed_name = msg.topic.split("/")[-1]
         payload = msg.payload.decode()
-        self.feeds_data[feed_name] = payload
-        
-        print(f"📩 [{self.username}] Update [{feed_name}]: {payload}")
-        
-        feeds = {f['feed_key']: f['category'] for f in self.feed_info}
-        
-        
-        # Check for alert conditions and create notifications    
-        if feeds.get(feed_name) == "Temperature":
-            temperature = float(payload)
-            if temperature > 38 or temperature < 16:
-                noti = NotiCreate(
-                    title="Temperature Alert",
-                    body=f"The current temperature is {temperature}°C, which exceed the safe threshold.",
-                    noti_type="Device",
-                    device_category="Temperature"
-                )
-                create_notification(noti, self.user_id)
-        
-        if feeds.get(feed_name) == "Humidity":
-            humidity = float(payload)
-            if humidity > 65 or humidity < 40:
-                noti = NotiCreate(
-                    title="Humidity Alert",
-                    body=f"The current humidity is {humidity}%, which is outside the allowed range.",
-                    noti_type="Device",
-                    device_category="Humidity"
-                )
-                create_notification(noti, self.user_id)
-            
-        if feeds.get(feed_name) == "Illuminance":
-            light = float(payload)
-            if light > 90:
-                noti = NotiCreate(
-                    title="Light Intensity Alert",
-                    body=f"The current illuminance is {light}%, The house is currently too bright.",
-                    noti_type="Device",
-                    device_category="Illuminance"
-                )
-                create_notification(noti, self.user_id)
-        
 
-        data_to_send = {"feed": feed_name, "value": payload}
-        
-        asyncio.run_coroutine_threadsafe(
-            manager.send_personal_message(data_to_send, self.user_id), 
-            self.loop
-        )
+        # 1. Cập nhật cache trước tiên
+        # Auto mode sẽ đọc giá trị mới nhất từ self.feeds_data
+        self.feeds_data[feed_name] = payload
+
+        print(f"📩 [{self.username}] Update [{feed_name}]: {payload}")
+
+        # 2. Map feed_key -> category
+        feeds = {
+            f.get("feed_key"): f.get("category")
+            for f in self.feed_info or []
+        }
+
+        category = feeds.get(feed_name)
+
+        # 3. Gửi WebSocket cho frontend ngay sau khi có dữ liệu mới
+        # Để UI cập nhật nhanh, không đợi xử lý auto xong
+        data_to_send = {
+            "feed": feed_name,
+            "value": payload,
+        }
+
+        try:
+            asyncio.run_coroutine_threadsafe(
+                manager.send_personal_message(data_to_send, self.user_id),
+                self.loop,
+            )
+        except Exception as e:
+            print(f"⚠️ WebSocket send failed: {e}")
+
+        # 4. Check alert conditions and create notifications
+        try:
+            if category == "Temperature":
+                temperature = float(payload)
+
+                if temperature > 38 or temperature < 16:
+                    noti = NotiCreate(
+                        title="Temperature Alert",
+                        body=f"The current temperature is {temperature}°C, which exceeds the safe threshold.",
+                        noti_type="Device",
+                        device_category="Temperature",
+                    )
+                    create_notification(noti, self.user_id)
+
+            elif category == "Humidity":
+                humidity = float(payload)
+
+                if humidity > 65 or humidity < 40:
+                    noti = NotiCreate(
+                        title="Humidity Alert",
+                        body=f"The current humidity is {humidity}%, which is outside the allowed range.",
+                        noti_type="Device",
+                        device_category="Humidity",
+                    )
+                    create_notification(noti, self.user_id)
+
+            elif category == "Illuminance":
+                light = float(payload)
+
+                if light > 90:
+                    noti = NotiCreate(
+                        title="Light Intensity Alert",
+                        body=f"The current illuminance is {light}%. The house is currently too bright.",
+                        noti_type="Device",
+                        device_category="Illuminance",
+                    )
+                    create_notification(noti, self.user_id)
+
+        except ValueError:
+            print(f"⚠️ Invalid sensor value for {feed_name}: {payload}")
+        except Exception as e:
+            print(f"❌ Notification error: {e}")
+
+        # 5. Sau khi feeds_data đã cập nhật giá trị mới, mới chạy auto
+        if self.auto_mode and category in ["Temperature", "Humidity", "Illuminance"]:
+            try:
+                from app.api.endpoints.records import run_auto_update
+
+                result = run_auto_update(
+                    feed_info=self.feed_info,
+                    mqtt_service=self,
+                )
+
+                if result and result.get("status") == "error":
+                    print(f"❌ Auto update error: {result.get('message')}")
+
+            except Exception as e:
+                print(f"❌ Auto update error: {e}")
         
     def start(self):
         self.client.connect("io.adafruit.com", 1883, 60)
