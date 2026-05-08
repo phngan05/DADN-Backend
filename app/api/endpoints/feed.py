@@ -8,16 +8,12 @@ router = APIRouter()
 
 
 @router.get("")
-def get_feeds(feed_id: str = None, user_id: str = Depends(get_current_user_id)):
+def get_feeds(user_id: str = Depends(get_current_user_id)):
     try:
+        print(user_id)
         query = supabase_client.table("FEED")\
-        .select("feed_id, feed_key, category, ADAFRUIT_SERVER(server_id, username)")
-        
-        
-        if feed_id is not None:
-            query = query.eq("feed_id", feed_id)
-        else:
-            query = query.eq("ADAFRUIT_SERVER.user_id", user_id)
+        .select("feed_id, feed_key, category, ADAFRUIT_SERVER!inner(server_id, username)")\
+        .eq("ADAFRUIT_SERVER.user_id", user_id)\
             
         response = query.execute()
         
