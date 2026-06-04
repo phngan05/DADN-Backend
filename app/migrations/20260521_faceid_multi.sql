@@ -1,0 +1,1 @@
+-- FaceID records are no longer required. Images are managed in app/uploads/faceid.

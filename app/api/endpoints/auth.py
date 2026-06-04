@@ -3,7 +3,6 @@ from fastapi import Depends, APIRouter, HTTPException
 from app.core.database import supabase_client
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.schemas.user import UserCreate
-import asyncio
 router = APIRouter()
 
 @router.post("/login")

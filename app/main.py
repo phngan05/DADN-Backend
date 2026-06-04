@@ -1,15 +1,19 @@
-import os
+from pathlib import Path
 from fastapi import FastAPI, WebSocket
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.api import api_router
-from app.core.config import settings
 from app.core.websocket_manager import manager
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
+UPLOAD_ROOT = Path(__file__).resolve().parent / "uploads"
+UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(UPLOAD_ROOT)), name="static")
 
 # CORS
 app.add_middleware(
