@@ -51,8 +51,45 @@ class AdafruitMQTT:
         # 1. Cập nhật cache trước tiên
         # Auto mode sẽ đọc giá trị mới nhất từ self.feeds_data
         self.feeds_data[feed_name] = payload
-
         print(f"📩 [{self.username}] Update [{feed_name}]: {payload}")
+        
+        feeds = {f['feed_key']: f['category'] for f in self.feed_info}
+        
+        
+        # Check for alert conditions and create notifications    
+        if feeds.get(feed_name) == "Temperature":
+            temperature = float(payload)
+            if temperature > 38 or temperature < 16:
+                noti = NotiCreate(
+                    title="Temperature Alert",
+                    body=f"The current temperature is {temperature}°C, which exceed the safe threshold.",
+                    noti_type="Device",
+                    device_category="Temperature"
+                )
+                create_notification(noti, self.user_id)
+        
+        if feeds.get(feed_name) == "Humidity":
+            humidity = float(payload)
+            if humidity > 65 or humidity < 40:
+                noti = NotiCreate(
+                    title="Humidity Alert",
+                    body=f"The current humidity is {humidity}%, which is outside the allowed range.",
+                    noti_type="Device",
+                    device_category="Humidity"
+                )
+                create_notification(noti, self.user_id)
+            
+        if feeds.get(feed_name) == "Illuminance":
+            light = float(payload)
+            if light > 90:
+                noti = NotiCreate(
+                    title="Light Intensity Alert",
+                    body=f"The current illuminance is {light}%, The house is currently too bright.",
+                    noti_type="Device",
+                    device_category="Illuminance"
+                )
+                create_notification(noti, self.user_id)
+        
 
         # 2. Map feed_key -> category
         feeds = {

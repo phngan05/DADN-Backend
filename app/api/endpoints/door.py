@@ -19,9 +19,12 @@ def save_to_json(hashed_password: str):
         json.dump({"hashed_password": hashed_password}, f)
 
 def read_from_json():
-    with open(PASSWORD_FILE, "r") as f:
-        data = json.load(f)
-        return data.get("hashed_password")
+    try:
+        with open(PASSWORD_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("hashed_password")
+    except FileNotFoundError:
+        return None
 
 @router.post("")
 async def verify_door_password(data: DoorAccessRequest):

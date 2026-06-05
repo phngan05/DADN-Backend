@@ -41,6 +41,12 @@ async def get_all_feeds(user_id: str = Depends(get_current_user_id)):
     mqtt_service = await get_or_create_mqtt_service(user_id)
     return mqtt_service.feeds_data
 
+@router.get("/auto/status")
+async def get_auto_status(user_id: str = Depends(get_current_user_id)):
+    """Return backend source-of-truth for Automatic/Manual mode."""
+    mqtt_service = await get_or_create_mqtt_service(user_id)
+    return {"auto_mode": bool(mqtt_service.auto_mode)}
+
 
 @router.get("/history/{feed_key}")
 def get_history(feed_key: str, mqtt_service=Depends(get_user_mqtt)):

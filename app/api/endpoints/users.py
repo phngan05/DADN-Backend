@@ -13,6 +13,8 @@ def get_profile(user_id: str = Depends(get_current_user_id)):
             .select("user_id, full_name, username, photo_url")\
             .eq('user_id', user_id)\
             .execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="User not found")
         return response.data[0]
         
     except Exception as e:
@@ -32,6 +34,8 @@ def update_profile(user: UserUpdate, user_id: str = Depends(get_current_user_id)
             .update(update_data)\
             .eq('user_id', user_id)\
             .execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="User not found")
         return response.data
         
     except Exception as e:
