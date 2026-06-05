@@ -12,40 +12,31 @@ router = APIRouter()
 @router.get("/{user_id}")
 async def stream_notifications(request: Request, user_id: str):
     async def event_generator():
-        initial_data = supabase_client.table("NOTIFICATION")\
-            .select("*")\
-            .eq('user_id', user_id)\
-            .order('created_at', desc=True)\
-            .execute()
-        
-        yield {
-            "event": "message",
-            "data": json.dumps(initial_data.data)
-        }
+        last_count: int | None = None
 
-        last_count = len(initial_data.data)
-        
-        try:
-            while True:
-                if await request.is_disconnected():
-                    break
+        while True:
+            if await request.is_disconnected():
+                break
 
+            try:
                 current_response = supabase_client.table("NOTIFICATION")\
                     .select("*")\
                     .eq('user_id', user_id)\
                     .order('created_at', desc=True)\
                     .execute()
-                
-                if len(current_response.data) != last_count:
-                    last_count = len(current_response.data)
-                    yield {
-                        "event": "message",
-                        "data": json.dumps(current_response.data)
-                    }
-                
-                await asyncio.sleep(5) 
-        except Exception as e:
-            print(f"Error in SSE stream: {e}")
+            except Exception as e:
+                print(f"Error in SSE stream: {e}")
+                await asyncio.sleep(5)
+                continue
+
+            if last_count is None or len(current_response.data) != last_count:
+                last_count = len(current_response.data)
+                yield {
+                    "event": "message",
+                    "data": json.dumps(current_response.data)
+                }
+
+            await asyncio.sleep(5)
 
     return EventSourceResponse(event_generator())
 

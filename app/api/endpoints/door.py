@@ -5,8 +5,12 @@ from app.core.security import get_current_user_id
 from app.schemas.door_auth import PasswordUpdate, DoorAccessRequest
 from app.schemas.noti import NotiCreate
 from app.api.endpoints.noti import create_notification
+import os
+current_file = os.path.abspath(__file__)
 
-PASSWORD_FILE = "app\\core\\door_auth.json"
+app_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
+
+PASSWORD_FILE = os.path.join(app_dir, "core", "door_auth.json")
 
 router = APIRouter()
 
@@ -15,9 +19,12 @@ def save_to_json(hashed_password: str):
         json.dump({"hashed_password": hashed_password}, f)
 
 def read_from_json():
-    with open(PASSWORD_FILE, "r") as f:
-        data = json.load(f)
-        return data.get("hashed_password")
+    try:
+        with open(PASSWORD_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("hashed_password")
+    except FileNotFoundError:
+        return None
 
 @router.post("")
 async def verify_door_password(data: DoorAccessRequest):
