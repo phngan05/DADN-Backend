@@ -1,0 +1,10 @@
+{
+  "hung": {
+    "full_name": "Hung",
+    "is_active": true
+  },
+  "hoang": {
+    "full_name": "Hoang",
+    "is_active": false
+  }
+}
